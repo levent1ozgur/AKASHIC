@@ -32,4 +32,8 @@ RUN python -c "from sentence_transformers import CrossEncoder; \
 
 EXPOSE 8765
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8765", "--log-level", "info"]
+# Copy startup script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]

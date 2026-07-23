@@ -76,13 +76,12 @@ AKASHIC turns your documents and notes into a searchable knowledge base — hybr
 ### Pipeline flow
 
 ```
-Query → Query Normalizer → Query Router
+Query → Query Router
         ├── Dense: ChromaDB (semantic similarity)
         └── Sparse: BM25 (keyword matching)
         → Reciprocal Rank Fusion
         → Cross-Encoder Reranker
-        → Context Compression
-        → Prompt Builder → Response with citations
+            → Prompt Builder → Response with citations
 ```
 
 ---

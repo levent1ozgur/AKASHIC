@@ -13,6 +13,7 @@ services:
     container_name: rag-pipeline
     ports:
       - "8765:8765"
+      - "8766:8766"
     volumes:
       # Vault: read-only mount of your Obsidian vault
       - ~/Documents/SecondBrain:/vault:ro

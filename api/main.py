@@ -14,13 +14,11 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+import dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from api.models.query import (
-    QueryRequest, QueryResponse, ChunkResult,
-    IngestResponse, DocumentStatus, PipelineStatus, AdminResponse,
-)
+from api.models import IngestRequest, IngestResponse, QueryRequest, QueryResponse, ChunkResult, AdminResponse, PipelineStatus, DocumentStatus
 from pipeline.ingestion.validator import FileValidator
 from pipeline.ingestion.converter import DocumentConverter
 from pipeline.ingestion.metadata import MetadataExtractor
@@ -81,7 +79,6 @@ def _load_config(path: str = "config.yaml") -> dict:
         logger.warning("config.yaml not found — using defaults.")
     return defaults
 
-
 # ---------------------------------------------------------------------------
 # App state (shared across requests)
 # ---------------------------------------------------------------------------
@@ -105,9 +102,7 @@ class AppState:
     telemetry:  Optional[TelemetryRecorder]
     query_cache: dict    # simple in-memory TTL cache
 
-
 state = AppState()
-
 
 # ---------------------------------------------------------------------------
 # Lifespan (startup / shutdown)
@@ -120,6 +115,20 @@ async def lifespan(app: FastAPI):
     state.config = cfg
 
     logger.info("Initialising RAG pipeline...")
+    # ── Environment variable overrides (matches .env.example) ──
+    dotenv.load_dotenv()
+    for key in ("OLLAMA_BASE_URL", "EMBEDDING_MODEL", "RERANKER_MODEL",
+                "VAULT_PATH", "TARGET_CHUNK_TOKENS", "CHUNK_OVERLAP_TOKENS",
+                "DENSE_TOP_K", "SPARSE_TOP_K", "CONFIDENCE_THRESHOLD",
+                "CACHE_TTL_SECONDS", "MAX_FILE_SIZE_MB", "LOG_LEVEL"):
+        if key in os.environ:
+            cfg_key = key.lower()
+            if cfg_key in cfg or key == "OLLAMA_BASE_URL":
+                val = os.environ[key]
+                if val.replace(".", "").replace("-", "").isdigit():
+                    val = float(val) if "." in val else int(val)
+                cfg[cfg_key if cfg_key in cfg else "ollama_base_url"] = val
+
 
     # Storage
     state.registry = Registry("data/registry.db")
@@ -208,7 +217,6 @@ async def lifespan(app: FastAPI):
         state.telemetry.stop()
     logger.info("RAG pipeline shut down.")
 
-
 # ---------------------------------------------------------------------------
 # FastAPI app
 # ---------------------------------------------------------------------------
@@ -219,7 +227,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
-
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -276,7 +283,6 @@ async def ingest(file: UploadFile = File(...)):
         status="pending",
         message="Document queued for ingestion.",
     )
-
 
 def invalidate_query_cache() -> None:
     """Clear the in-memory query cache when vault data changes."""
@@ -450,7 +456,6 @@ async def query(req: QueryRequest):
 
     return response
 
-
 @app.get("/status", response_model=PipelineStatus)
 async def status():
     """Return pipeline health and document counts."""
@@ -466,7 +471,6 @@ async def status():
         telemetry=telemetry,
     )
 
-
 @app.get("/status/{doc_id}", response_model=DocumentStatus)
 async def document_status(doc_id: str):
     """Return status of a specific document by doc_id."""
@@ -477,7 +481,6 @@ async def document_status(doc_id: str):
         k: v for k, v in vars(doc).items()
         if k in DocumentStatus.model_fields
     })
-
 
 @app.delete("/document/{doc_id}", response_model=AdminResponse)
 async def delete_document(doc_id: str):
@@ -498,7 +501,6 @@ async def delete_document(doc_id: str):
         message=f"Document '{doc.source_path}' deleted.",
         doc_id=doc_id,
     )
-
 
 @app.post("/reindex", response_model=AdminResponse)
 async def reindex(doc_id: Optional[str] = None):
@@ -527,7 +529,6 @@ async def reindex(doc_id: Optional[str] = None):
 
     return AdminResponse(success=True, message=f"Re-ingestion queued for {queued} documents.")
 
-
 # ---------------------------------------------------------------------------
 # Background ingestion
 # ---------------------------------------------------------------------------
@@ -543,7 +544,6 @@ async def _ingest_document(doc_id: str, path: Path, source_name: str) -> None:
     except Exception as e:
         logger.error("Ingestion failed for %s: %s", source_name, e)
         state.registry.update_status(doc_id, "failed", error_message=str(e))
-
 
 def _ingest_sync(doc_id: str, path: Path, source_name: str) -> None:
     """Synchronous ingestion pipeline (runs in thread pool)."""
@@ -593,7 +593,6 @@ def _ingest_sync(doc_id: str, path: Path, source_name: str) -> None:
 
     logger.info("Ingestion complete: %s (%d chunks)", source_name, len(chunks))
 
-
 # ---------------------------------------------------------------------------
 # Vault event handler
 # ---------------------------------------------------------------------------
@@ -601,7 +600,6 @@ def _ingest_sync(doc_id: str, path: Path, source_name: str) -> None:
 def _on_vault_event(event: VaultEvent) -> None:
     """Handle vault file changes sequentially to prevent race conditions."""
     _handle_vault_event_sync(event)
-
 
 def _handle_vault_event_sync(event: VaultEvent) -> None:
     """Synchronous vault event handler (runs in a thread)."""
