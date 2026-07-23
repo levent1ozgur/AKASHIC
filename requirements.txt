@@ -1,0 +1,29 @@
+# Core API
+fastapi==0.139.0
+uvicorn==0.49.0
+python-multipart==0.0.32
+pydantic>=2.9.0
+
+# Storage
+chromadb
+bm25s
+
+# Ingestion
+markitdown[all]
+pytesseract
+pdf2image
+python-magic
+markdown-it-py
+langdetect
+pyyaml
+semantic-text-splitter
+
+# Retrieval
+sentence-transformers
+torch
+
+# HTTP client (Ollama API)
+httpx
+
+# Vault
+watchdog

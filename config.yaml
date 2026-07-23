@@ -1,0 +1,61 @@
+# Odysseus RAG Pipeline — Configuration
+# All pipeline parameters live here. Rebuild not required for config changes.
+
+# --- Embedding ---
+embedding_model: qwen3-embedding:0.6b
+ollama_base_url: http://localhost:11434
+embedding_batch_size: 32
+
+# --- Reranker ---
+reranker_model: Qwen/Qwen3-Reranker-0.6B
+reranker_top_k: 6
+
+# --- Chunking ---
+target_chunk_tokens: 512
+chunk_overlap_tokens: 64
+small_doc_threshold_tokens: 20000
+
+# --- Retrieval ---
+dense_top_k: 10
+sparse_top_k: 10
+fusion_top_k: 20
+high_confidence_threshold: 0.7
+low_confidence_threshold: 0.4
+
+# --- Graph expansion ---
+graph_expansion_enabled: true
+graph_expansion_depth: 1
+graph_expansion_max_per_chunk: 3
+
+# --- HyDE (disabled by default — enable after measuring baseline) ---
+hyde_enabled: false
+hyde_min_query_tokens: 6
+
+# --- Context compression (disabled by default) ---
+compression_enabled: false
+
+# --- Query cache ---
+query_cache_enabled: true
+query_cache_ttl_seconds: 3600
+
+# --- Vault ---
+vault_path: /home/user/Documents/SecondBrain
+vault_exclude_patterns:
+  - ".git/**"
+  - ".opencode/node_modules/**"
+  - ".opencode/scripts/**"
+  - "AGENTS.md"
+  - "INSTALL.md"
+vault_watcher_debounce_seconds: 2
+
+# --- Security ---
+max_file_size_mb: 100
+
+# --- Telemetry ---
+telemetry_enabled: true
+confidence_source: dense
+dense_confidence_threshold: 0.55
+
+# --- Pipeline versions (bump when pipeline logic changes) ---
+chunking_version:          hierarchical/v3
+context_enrichment_version: v2

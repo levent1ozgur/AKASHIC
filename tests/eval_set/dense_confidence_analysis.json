@@ -1,0 +1,302 @@
+[
+  {
+    "id": "vault-001",
+    "should_find": true,
+    "dense_distance": 0.31111520528793335,
+    "best_source": "Logs/2026-07-06.md"
+  },
+  {
+    "id": "vault-002",
+    "should_find": true,
+    "dense_distance": 0.4365718364715576,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-003",
+    "should_find": true,
+    "dense_distance": 0.3385152220726013,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-004",
+    "should_find": true,
+    "dense_distance": 0.44049739837646484,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-005",
+    "should_find": true,
+    "dense_distance": 0.29031383991241455,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-006",
+    "should_find": true,
+    "dense_distance": 0.44983410835266113,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-007",
+    "should_find": true,
+    "dense_distance": 0.32512378692626953,
+    "best_source": "Boards/Engineering.md"
+  },
+  {
+    "id": "vault-008",
+    "should_find": true,
+    "dense_distance": 0.4525284767150879,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-009",
+    "should_find": true,
+    "dense_distance": 0.4871952533721924,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-010",
+    "should_find": true,
+    "dense_distance": 0.41953110694885254,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "vault-011",
+    "should_find": true,
+    "dense_distance": 0.20855605602264404,
+    "best_source": "Logs/2026-07-06.md"
+  },
+  {
+    "id": "vault-012",
+    "should_find": true,
+    "dense_distance": 0.5207260847091675,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "vault-013",
+    "should_find": true,
+    "dense_distance": 0.38958412408828735,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "vault-014",
+    "should_find": true,
+    "dense_distance": 0.4870411157608032,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "vault-015",
+    "should_find": true,
+    "dense_distance": 0.3735414743423462,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "vault-016",
+    "should_find": true,
+    "dense_distance": 0.36775946617126465,
+    "best_source": "Daily/2026-07-07.md"
+  },
+  {
+    "id": "vault-017",
+    "should_find": true,
+    "dense_distance": 0.24757099151611328,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-018",
+    "should_find": true,
+    "dense_distance": 0.3590315580368042,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-019",
+    "should_find": true,
+    "dense_distance": 0.3346881866455078,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-020",
+    "should_find": true,
+    "dense_distance": 0.3085092306137085,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-021",
+    "should_find": true,
+    "dense_distance": 0.42604953050613403,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-022",
+    "should_find": true,
+    "dense_distance": 0.37310874462127686,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-023",
+    "should_find": true,
+    "dense_distance": 0.3857719898223877,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-024",
+    "should_find": true,
+    "dense_distance": 0.3931620717048645,
+    "best_source": "index.md"
+  },
+  {
+    "id": "vault-025",
+    "should_find": true,
+    "dense_distance": 0.39633435010910034,
+    "best_source": "Logs/2026-07-06.md"
+  },
+  {
+    "id": "vault-026",
+    "should_find": true,
+    "dense_distance": 0.46329736709594727,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-027",
+    "should_find": true,
+    "dense_distance": 0.3989558815956116,
+    "best_source": "Logs/2026-07-06.md"
+  },
+  {
+    "id": "vault-028",
+    "should_find": true,
+    "dense_distance": 0.40467846393585205,
+    "best_source": "Daily/2026-07-07.md"
+  },
+  {
+    "id": "vault-029",
+    "should_find": true,
+    "dense_distance": 0.3080277442932129,
+    "best_source": "_CLAUDE.md"
+  },
+  {
+    "id": "vault-030",
+    "should_find": true,
+    "dense_distance": 0.5159677863121033,
+    "best_source": "Daily/2026-07-07.md"
+  },
+  {
+    "id": "docs-001",
+    "should_find": true,
+    "dense_distance": 0.3677549362182617,
+    "best_source": "INSTALL.md"
+  },
+  {
+    "id": "docs-002",
+    "should_find": true,
+    "dense_distance": 0.3015979528427124,
+    "best_source": "INSTALL.md"
+  },
+  {
+    "id": "docs-003",
+    "should_find": true,
+    "dense_distance": 0.24912607669830322,
+    "best_source": "INSTALL.md"
+  },
+  {
+    "id": "docs-004",
+    "should_find": true,
+    "dense_distance": 0.33249473571777344,
+    "best_source": "INSTALL.md"
+  },
+  {
+    "id": "docs-005",
+    "should_find": true,
+    "dense_distance": 0.32590198516845703,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-006",
+    "should_find": true,
+    "dense_distance": 0.25832390785217285,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-007",
+    "should_find": true,
+    "dense_distance": 0.5532535314559937,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-008",
+    "should_find": true,
+    "dense_distance": 0.2963629961013794,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-009",
+    "should_find": true,
+    "dense_distance": 0.26522934436798096,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-010",
+    "should_find": true,
+    "dense_distance": 0.28710657358169556,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-011",
+    "should_find": true,
+    "dense_distance": 0.3460294008255005,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-012",
+    "should_find": true,
+    "dense_distance": 0.25934475660324097,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-013",
+    "should_find": true,
+    "dense_distance": 0.36602354049682617,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-014",
+    "should_find": true,
+    "dense_distance": 0.6008250713348389,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "docs-015",
+    "should_find": true,
+    "dense_distance": 0.3751823902130127,
+    "best_source": "Handbook_of_Medicinal_Herbs.pdf"
+  },
+  {
+    "id": "edge-001",
+    "should_find": false,
+    "dense_distance": 0.7160840034484863,
+    "best_source": "Daily/2026-07-07.md"
+  },
+  {
+    "id": "edge-002",
+    "should_find": false,
+    "dense_distance": 0.6471087336540222,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "edge-003",
+    "should_find": false,
+    "dense_distance": 0.4696998596191406,
+    "best_source": "index.md"
+  },
+  {
+    "id": "edge-004",
+    "should_find": true,
+    "dense_distance": 0.3630760908126831,
+    "best_source": "Daily/2026-07-06.md"
+  },
+  {
+    "id": "edge-005",
+    "should_find": true,
+    "dense_distance": 0.37398242950439453,
+    "best_source": "Daily/2026-07-06.md"
+  }
+]

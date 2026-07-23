@@ -1,0 +1,34 @@
+version: "3.9"
+
+networks:
+  rag-net:
+    name: rag-net
+    driver: bridge
+
+services:
+  rag-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-pipeline
+    ports:
+      - "8765:8765"
+    volumes:
+      # Vault: read-only mount of your Obsidian vault
+      - ~/Documents/SecondBrain:/vault:ro
+      # Persistent data: vector DB, BM25, registry, uploads
+      - ./data:/app/data
+      # Config: hot-reload without rebuild
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    networks:
+      - rag-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s    # give extra time for reranker model to load

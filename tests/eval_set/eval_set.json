@@ -1,0 +1,622 @@
+{
+  "meta": {
+    "name": "AKASHIC Retrieval Evaluation Set v2 - Alice",
+    "description": "50 query-passage pairs drawn from the Obsidian vault and ingested documents. Covers vault setup, daily notes, operating manual, templates, INSTALL.md guide, and Handbook of Medicinal Herbs.",
+    "created": "2026-07-23",
+    "embedding_model": "qwen3-embedding:0.6b",
+    "reranker_model": "Qwen/Qwen3-Reranker-0.6B",
+    "chunking": "hierarchical (512 token target, 64 token overlap)",
+    "purpose": "Measure Recall@K, Precision@K, and MRR before and after each pipeline change \u2014 never tune without data.",
+    "test_document": "Alice's Adventures in Wonderland (Project Gutenberg)"
+  },
+  "cases": [
+    {
+      "id": "vault-001",
+      "query": "What preset was used to bootstrap the vault?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "Preset: builder",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "Direct metadata from the operating manual."
+    },
+    {
+      "id": "vault-002",
+      "query": "Which folder should Dev Logs be saved to?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "Dev Logs/",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "Folder map table \u2014 Dev Logs mapped to Technical work logs."
+    },
+    {
+      "id": "vault-003",
+      "query": "What does a \ud83d\udd34 priority mean in the kanban convention?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "\ud83d\udd34 critical",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "Direct from Kanban Convention section."
+    },
+    {
+      "id": "vault-004",
+      "query": "What should be updated when a new project is created?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "Board (Backlog) + today's daily note",
+      "difficulty": "medium",
+      "category": "setup",
+      "notes": "Propagation Rules table \u2014 tests whether the system retrieves structured cross-reference rules."
+    },
+    {
+      "id": "vault-005",
+      "query": "What does the vault auto-save for decisions made in conversation?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "relevant project note + daily note",
+      "difficulty": "medium",
+      "category": "setup",
+      "notes": "Auto-Save Rules section \u2014 tests semantic match on 'auto-save' vs 'Auto-Save Rules'."
+    },
+    {
+      "id": "vault-006",
+      "query": "How should persons be indexed in the vault?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "Full name (e.g.",
+      "difficulty": "medium",
+      "category": "setup",
+      "notes": "Naming Conventions section for People/ notes."
+    },
+    {
+      "id": "vault-007",
+      "query": "What command adds new tasks to the kanban board?",
+      "route": "vault",
+      "expected_sources": [
+        "index.md"
+      ],
+      "expected_text_fragment": "/obsidian-task",
+      "difficulty": "medium",
+      "category": "setup",
+      "notes": "index.md shows /obsidian-project and /obsidian-task as creation commands."
+    },
+    {
+      "id": "vault-008",
+      "query": "What is the primary purpose of this vault?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "Primary purpose: Projects, dev logs, architecture, debugging",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "Vault Identity section in _CLAUDE.md."
+    },
+    {
+      "id": "vault-009",
+      "query": "Whose vault is this?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "Owner: User",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "Vault Identity section."
+    },
+    {
+      "id": "vault-010",
+      "query": "What happened on 2026-07-06 at 19:41?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "Installed 47 skills into",
+      "difficulty": "medium",
+      "category": "daily",
+      "notes": "Exact timestamp from daily note work log."
+    },
+    {
+      "id": "vault-011",
+      "query": "What time was the vault bootstrapped on 2026-07-06?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md",
+        "Logs/2026-07-06.md"
+      ],
+      "expected_text_fragment": "19:43",
+      "difficulty": "medium",
+      "category": "daily",
+      "notes": "Both the daily note and the log mention bootstrapping."
+    },
+    {
+      "id": "vault-012",
+      "query": "Why are some skills unavailable?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "No API keys configured",
+      "difficulty": "medium",
+      "category": "daily",
+      "notes": "Evening review section \u2014 /x-read, /x-pulse, /notebooklm unavailable without keys."
+    },
+    {
+      "id": "vault-013",
+      "query": "What integrations were set up on 2026-07-06?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "obsidian-second-brain",
+      "difficulty": "medium",
+      "category": "daily",
+      "notes": "Main topic of the day \u2014 setting up the vault and Hermes integration."
+    },
+    {
+      "id": "vault-014",
+      "query": "How many skills were installed on the first day?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "47 skills",
+      "difficulty": "easy",
+      "category": "daily",
+      "notes": "Exact number stated multiple times in the daily note."
+    },
+    {
+      "id": "vault-015",
+      "query": "What was the emotional state on 2026-07-06?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "mood: productive",
+      "difficulty": "easy",
+      "category": "daily",
+      "notes": "Frontmatter metadata \u2014 tests retrieval of YAML frontmatter."
+    },
+    {
+      "id": "vault-016",
+      "query": "Was any work logged on 2026-07-07?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-07.md"
+      ],
+      "expected_text_fragment": "No work was logged today",
+      "difficulty": "easy",
+      "category": "daily",
+      "notes": "Inactive day \u2014 tests that the system can retrieve content saying 'nothing happened'."
+    },
+    {
+      "id": "vault-017",
+      "query": "How should daily notes be named?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "YYYY-MM-DD.md",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "Naming Conventions for daily notes."
+    },
+    {
+      "id": "vault-018",
+      "query": "What templates exist in the vault?",
+      "route": "vault",
+      "expected_sources": [
+        "index.md"
+      ],
+      "expected_text_fragment": "Templates/Daily Note",
+      "difficulty": "medium",
+      "category": "templates",
+      "notes": "index.md catalogs all templates."
+    },
+    {
+      "id": "vault-019",
+      "query": "What should be done before archiving or deleting a note?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "ask before saving",
+      "difficulty": "hard",
+      "category": "setup",
+      "notes": "Auto-Save Rules say Claude should ask before deleting/archiving. Tests semantic understanding of 'ask before'."
+    },
+    {
+      "id": "vault-020",
+      "query": "What fields does a daily note template have?",
+      "route": "vault",
+      "expected_sources": [
+        "Templates/Daily Note.md"
+      ],
+      "expected_text_fragment": "## \ud83c\udf05 Morning",
+      "difficulty": "medium",
+      "category": "templates",
+      "notes": "Daily note template structure."
+    },
+    {
+      "id": "vault-021",
+      "query": "What information does a person note capture?",
+      "route": "vault",
+      "expected_sources": [
+        "Templates/Person.md"
+      ],
+      "expected_text_fragment": "role:",
+      "difficulty": "hard",
+      "category": "templates",
+      "notes": "Person template frontmatter has role, company, relationship_strength fields."
+    },
+    {
+      "id": "vault-022",
+      "query": "How does the project template track decisions?",
+      "route": "vault",
+      "expected_sources": [
+        "Templates/Project.md"
+      ],
+      "expected_text_fragment": "Key Decisions",
+      "difficulty": "hard",
+      "category": "templates",
+      "notes": "Project template has a Key Decisions section."
+    },
+    {
+      "id": "vault-023",
+      "query": "Are there any active projects in the vault?",
+      "route": "vault",
+      "expected_sources": [
+        "index.md"
+      ],
+      "expected_text_fragment": "Empty",
+      "difficulty": "medium",
+      "category": "setup",
+      "notes": "index.md says Projects is empty. Tests retrieval of 'empty state' content."
+    },
+    {
+      "id": "vault-024",
+      "query": "What nightly maintenance runs on the vault?",
+      "route": "vault",
+      "expected_sources": [
+        "log.md"
+      ],
+      "expected_text_fragment": "nightly",
+      "difficulty": "hard",
+      "category": "daily",
+      "notes": "log.md shows nightly consolidation entries for reconciliation, synthesis, orphan linking."
+    },
+    {
+      "id": "vault-025",
+      "query": "How many total notes were in the vault on 2026-07-06?",
+      "route": "vault",
+      "expected_sources": [
+        "Home.md"
+      ],
+      "expected_text_fragment": "dv.pages",
+      "difficulty": "hard",
+      "category": "setup",
+      "notes": "Home.md has a DataviewJS block counting total pages. Tests retrieval of code/protected blocks."
+    },
+    {
+      "id": "vault-026",
+      "query": "What is the Engineering board used for?",
+      "route": "vault",
+      "expected_sources": [
+        "index.md"
+      ],
+      "expected_text_fragment": "Engineering kanban board",
+      "difficulty": "easy",
+      "category": "setup",
+      "notes": "index.md describes it as 'Engineering kanban board'."
+    },
+    {
+      "id": "vault-027",
+      "query": "What repo was cloned during vault setup?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "obsidian-second-brain",
+      "difficulty": "medium",
+      "category": "daily",
+      "notes": "Work log entry: 'Cloned obsidian-second-brain repo'."
+    },
+    {
+      "id": "vault-028",
+      "query": "What was Levent's energy level on 2026-07-06?",
+      "route": "vault",
+      "expected_sources": [
+        "Daily/2026-07-06.md"
+      ],
+      "expected_text_fragment": "energy: high",
+      "difficulty": "easy",
+      "category": "daily",
+      "notes": "Frontmatter metadata."
+    },
+    {
+      "id": "vault-029",
+      "query": "What does the kanban format look like for active items?",
+      "route": "vault",
+      "expected_sources": [
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "- [ ] \ud83d\udd34 **Title** \u00b7 @",
+      "difficulty": "hard",
+      "category": "setup",
+      "notes": "Kanban Convention section shows exact markdown format for active items. Tests whether code blocks are retrieved."
+    },
+    {
+      "id": "vault-030",
+      "query": "What sections does the morning routine include?",
+      "route": "vault",
+      "expected_sources": [
+        "Templates/Daily Note.md"
+      ],
+      "expected_text_fragment": "Intention:",
+      "difficulty": "medium",
+      "category": "templates",
+      "notes": "Morning section has Intention, Grateful for, etc."
+    },
+    {
+      "id": "docs-001",
+      "query": "How do you install obsidian-second-brain on OpenCode?",
+      "route": "docs",
+      "expected_sources": [
+        "INSTALL.md"
+      ],
+      "expected_text_fragment": "cp -R dist/opencode/. /path/to/your/vault/",
+      "difficulty": "medium",
+      "category": "install",
+      "notes": "Direct install instructions from the document."
+    },
+    {
+      "id": "docs-002",
+      "query": "What model can be used for a free trial of OpenCode?",
+      "route": "docs",
+      "expected_sources": [
+        "INSTALL.md"
+      ],
+      "expected_text_fragment": "hermes-3-llama-3.1-405b:free",
+      "difficulty": "medium",
+      "category": "install",
+      "notes": "OpenCode config example mentions free-tier model."
+    },
+    {
+      "id": "docs-003",
+      "query": "Does OpenCode run on open models?",
+      "route": "docs",
+      "expected_sources": [
+        "INSTALL.md"
+      ],
+      "expected_text_fragment": "model-agnostic",
+      "difficulty": "easy",
+      "category": "install",
+      "notes": "Document explicitly says OpenCode is model-agnostic."
+    },
+    {
+      "id": "docs-004",
+      "query": "What OpenRouter provider config is used for Hermes models?",
+      "route": "docs",
+      "expected_sources": [
+        "INSTALL.md"
+      ],
+      "expected_text_fragment": "openrouter",
+      "difficulty": "medium",
+      "category": "install",
+      "notes": "OpenCode JSON config example with OpenRouter provider."
+    },
+    {
+      "id": "edge-001",
+      "query": "What is the meaning of life?",
+      "route": "both",
+      "expected_sources": [],
+      "expected_text_fragment": "",
+      "difficulty": "hard",
+      "category": "edge-case",
+      "notes": "Nonsense query with no matching content \u2014 should return not_found=true."
+    },
+    {
+      "id": "edge-002",
+      "query": "What is the airspeed velocity of an unladen swallow?",
+      "route": "both",
+      "expected_sources": [],
+      "expected_text_fragment": "",
+      "difficulty": "hard",
+      "category": "edge-case",
+      "notes": "Another no-match query. Tests graceful degradation."
+    },
+    {
+      "id": "edge-003",
+      "query": "config.yaml",
+      "route": "both",
+      "expected_sources": [],
+      "expected_text_fragment": "",
+      "difficulty": "hard",
+      "category": "edge-case",
+      "notes": "Ambiguous \u2014 'config.yaml' could refer to the AKASHIC config or the CLAUDE.md. Expect no clear match since config.yaml content isn't indexed as a document."
+    },
+    {
+      "id": "edge-004",
+      "query": "setup",
+      "route": "both",
+      "expected_sources": [
+        "Daily/2026-07-06.md",
+        "_CLAUDE.md"
+      ],
+      "expected_text_fragment": "setup",
+      "difficulty": "hard",
+      "category": "edge-case",
+      "notes": "Single-word broad query. Tests how the system handles under-specified queries \u2014 should return multiple relevant results."
+    },
+    {
+      "id": "edge-005",
+      "query": "Aloe vera dosage for skin irritation",
+      "route": "both",
+      "expected_sources": [
+        "Handbook_of_Medicinal_Herbs.md"
+      ],
+      "expected_text_fragment": "Aloe",
+      "difficulty": "medium",
+      "category": "herbs",
+      "notes": "Cross-source query that should primarily match the handbook. Also tests 'skin' semantic match to aloe gel indications."
+    },
+    {
+      "id": "alice-001",
+      "query": "Who wrote Alice's Adventures in Wonderland?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "Author: Lewis Carroll",
+      "difficulty": "easy",
+      "category": "alice",
+      "notes": "Author from Gutenberg header."
+    },
+    {
+      "id": "alice-002",
+      "query": "What happened when Alice drank the potion?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "shutting up like a telescope",
+      "difficulty": "easy",
+      "category": "alice",
+      "notes": "Alice shrinks after drinking."
+    },
+    {
+      "id": "alice-003",
+      "query": "What game did Alice play against herself?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "game of croquet",
+      "difficulty": "medium",
+      "category": "alice",
+      "notes": "Alice plays croquet."
+    },
+    {
+      "id": "alice-004",
+      "query": "What did eating the cake do to Alice?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "makes me grow larger",
+      "difficulty": "medium",
+      "category": "alice",
+      "notes": "Cake makes Alice grow."
+    },
+    {
+      "id": "alice-005",
+      "query": "What does the Cheshire Cat do?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "seems to grin",
+      "difficulty": "easy",
+      "category": "alice",
+      "notes": "The Cheshire Cat grins."
+    },
+    {
+      "id": "alice-006",
+      "query": "What pool did Alice find herself in?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "pool of tears",
+      "difficulty": "medium",
+      "category": "alice",
+      "notes": "Pool of tears."
+    },
+    {
+      "id": "alice-007",
+      "query": "Who organized the Caucus Race?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "Dodo",
+      "difficulty": "hard",
+      "category": "alice",
+      "notes": "Dodo organizes the race."
+    },
+    {
+      "id": "alice-008",
+      "query": "What does the Caterpillar ask Alice?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "Who are you",
+      "difficulty": "medium",
+      "category": "alice",
+      "notes": "Caterpillar's question."
+    },
+    {
+      "id": "alice-009",
+      "query": "What did the Duchess baby turn into?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "pig",
+      "difficulty": "hard",
+      "category": "alice",
+      "notes": "Baby becomes a pig."
+    },
+    {
+      "id": "alice-010",
+      "query": "What was the Knave of Hearts accused of stealing?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "tarts",
+      "difficulty": "medium",
+      "category": "alice",
+      "notes": "Knave steals tarts."
+    },
+    {
+      "id": "alice-011",
+      "query": "Who attended the Mad Tea Party?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "tea",
+      "difficulty": "medium",
+      "category": "alice",
+      "notes": "Tea party attendees."
+    },
+    {
+      "id": "alice-012",
+      "query": "What creature tells its story and sobs?",
+      "route": "docs",
+      "expected_sources": [
+        "alice.txt"
+      ],
+      "expected_text_fragment": "Mock Turtle",
+      "difficulty": "hard",
+      "category": "alice",
+      "notes": "Mock Turtle's story."
+    }
+  ]
+}

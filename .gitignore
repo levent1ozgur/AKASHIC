@@ -1,0 +1,32 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+data/
+*.db
+*.bm25
+.env
+# Temp / debug scripts
+benchmark_dense*.py
+confidence_sweep.py
+debug_*.py
+find_text.py
+fix_and_reindex.py
+fix_ordering.py
+insert_regex.py
+patch_*.py
+reindex*.py
+test_*.py
+wire_section.py
+# Data
+data/uploads/
+data/markdown/
+data/vector_db/
+data/bm25/
+data/registry.db
+data/telemetry.db*
+data/vault_graph.json
+# Venv
+venv/
+# Temp
+*.log
