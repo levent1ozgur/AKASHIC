@@ -425,7 +425,7 @@ Vault events are handled one at a time in the watcher's polling loop. This preve
 
 ### Triple-Store Consistency
 
-Every lifecycle operation updates all three stores atomically:
+Every lifecycle operation updates all three stores through a sequential consistency workflow:
 
 | Store | Location | Cleared on |
 |-------|----------|-----------|
@@ -433,8 +433,7 @@ Every lifecycle operation updates all three stores atomically:
 | BM25S (sparse) | `data/bm25/` | DELETE / MODIFY / MOVED |
 | Registry (SQLite) | `data/registry.db` | DELETE / MOVED |
 
-If any store write fails, the operation is logged and the other stores remain consistent. A full reindex (`POST /reindex`) reconciles all three.
-
+If the process crashes mid-operation, the stores may be in a partial state. A full reindex (`POST /reindex`) reconciles all three. 
 ### Orphan Detection
 
 The recommended periodic check:
@@ -627,11 +626,11 @@ These fields enable:
 - Detecting stale indexes after pipeline changes
 - Comparing retrieval quality across pipeline versions
 - Auditing which pipeline version produced each query result
-## 14. Engineering Journey
+## 14. Engineering Decisions
 
-This section explains **why** the architecture looks the way it does — the failures, measurements, and decisions that shaped the current design.
+This section documents the architectural decisions and the evidence that motivated them — the failures, measurements, and decisions that shaped the current design.
 
-### 13.1 Section-context enrichment
+### 14.1 Structural Context Enrichment
 
 **Problem:** PDF-to-markdown conversion flattens section headers. A handbook entry like `Activities (Aloe) —` produced chunks with text like `— used externally for burns, wounds` but no mention of "Aloe" in the chunk body. Retrieval for "Aloe" returned nothing.
 
@@ -647,14 +646,16 @@ Query "Aloe" →        Not found (herb name missing from chunk)
 
 **Diagnosis:** The chunker had no concept of section identity. Each chunk was semantically orphaned from its parent heading.
 
-**Fix:** Added `_SECTION_RE` regex (`/^(\w[\w\s]+)\s+\((\w[\w\s]*)\)\s*—/m`) to detect section headers in flat documents, and a `section_context` field on every `Chunk`. The embedder prepends this context before computing the embedding vector — the stored text remains unchanged, but the vector carries the section's identity.
+**Decision:**
+**Result:**
+ Added `_SECTION_RE` regex (`/^(\w[\w\s]+)\s+\((\w[\w\s]*)\)\s*—/m`) to detect section headers in flat documents, and a `section_context` field on every `Chunk`. The embedder prepends this context before computing the embedding vector — the stored text remains unchanged, but the vector carries the section's identity.
 
 **Result:**
 - Herbs category recall: 66.7% → 100%
 - Vault recall (structured docs): unchanged (96.7%)
 - 98% of handbook chunks now carry section_context
 
-### 13.2 Confidence gating: reranker → dense distance
+### 14.2 Confidence Signal
 
 **Problem:** The cross-encoder reranker was used for both ranking and confidence gating. Its raw scores (logits) were treated as a probability that the query matched the corpus.
 
@@ -676,13 +677,15 @@ Dense similarity → confidence gate → not_found
 Reranker        → ranking only
 ```
 
-**Fix:** Switched the confidence signal from the reranker's logits to ChromaDB's minimum cosine distance across retrieved chunks. The reranker continues to rank results — it's better at relative ordering than the dense index. But answerability is determined by the dense distance alone.
+**Decision:**
+**Result:**
+ Switched the confidence signal from the reranker's logits to ChromaDB's minimum cosine distance across retrieved chunks. The reranker continues to rank results — it's better at relative ordering than the dense index. But answerability is determined by the dense distance alone.
 
 **Threshold:** 0.55 (validated against 51-case eval set: 97.9% precision, 95.7% recall, F1=0.968)
 
 **Caveat:** The threshold is provisional — validated against the current corpus and query distribution. It should be re-evaluated as the corpus grows.
 
-### 13.3 Query cache invalidation
+### 14.3 Cache Invalidation
 
 **Problem:** Vault watcher correctly updated ChromaDB and BM25S on document changes. But the in-memory query cache (3600s TTL) served stale results for up to an hour. A modify-and-query sequence would return the old content from cache.
 
@@ -694,7 +697,9 @@ File modified → Watcher updates index → Cache still serves old results
 
 **Diagnosis:** The lifecycle tests were passing against the raw indices (ChromaDB had correct data), but the API returned cached responses. The test harness checked API responses, not raw index state.
 
-**Fix:** Added `invalidate_query_cache()` — clears the entire query cache on every vault document event (CREATE, MODIFY, RENAME, DELETE).
+**Decision:**
+**Result:**
+ Added `invalidate_query_cache()` — clears the entire query cache on every vault document event (CREATE, MODIFY, RENAME, DELETE).
 
 ```python
 def invalidate_query_cache() -> None:
@@ -704,7 +709,7 @@ def invalidate_query_cache() -> None:
 
 Also added calls in the document DELETE endpoint (`DELETE /document/{doc_id}`).
 
-### 13.4 MOVED handler: orphaned chunk cleanup
+### 14.4 Rename/MOVE Consistency
 
 **Problem:** Renaming a vault note left orphaned chunks in ChromaDB under the old source path. The MOVED handler correctly updated the registry but never removed the old vectors.
 
@@ -720,7 +725,9 @@ MOVED handler:
 Old chunks remain retrievable under old path
 ```
 
-**Fix:** Added ChromaDB and BM25S cleanup in the MOVED handler — the same triple-store cleanup that the MODIFY and DELETE handlers already performed.
+**Decision:**
+**Result:**
+ Added ChromaDB and BM25S cleanup in the MOVED handler — the same triple-store cleanup that the MODIFY and DELETE handlers already performed.
 
 ```python
 if event.event_type == VaultEventType.MOVED:
@@ -734,7 +741,7 @@ if event.event_type == VaultEventType.MOVED:
             invalidate_query_cache()
 ```
 
-### 13.5 Race condition: concurrent event handlers
+### 14.5 Sequential Event Processing
 
 **Problem:** The vault watcher spawned a new thread for every file system event. A MOVED event and DELETE event for the same file could run concurrently.
 
@@ -748,7 +755,9 @@ Chunks exist in ChromaDB but registry entry is gone
 
 **Diagnosis:** The fire-and-forget threading was borrowed from the initial implementation for responsiveness. For small markdown files (the vault's dominant content type), the handler completes in under 2 seconds — responsiveness was never the bottleneck.
 
-**Fix:** Replaced threading with sequential event processing. The polling loop calls the handler directly instead of delegating to a thread.
+**Decision:**
+**Result:**
+ Replaced threading with sequential event processing. The polling loop calls the handler directly instead of delegating to a thread.
 
 ```python
 # Before: concurrent (bugs)
@@ -760,9 +769,9 @@ def _on_vault_event(event):
     _handle_vault_event_sync(event)
 ```
 
-### 13.6 Test methodology pitfalls
+### 14.6 Evaluation Methodology
 
-The lifecycle tests themselves had a bug that masked the true state of the index. The original test used substring matching:
+**Problem:** The lifecycle tests themselves had a bug that masked the true state of the index. The original test used substring matching:
 
 ```python
 # Broken: substring match
@@ -783,9 +792,9 @@ def found_exact(token, resp):
     return False
 ```
 
-### 13.7 Version tracking
+### 14.7 Pipeline Versioning
 
-Every chunk stores pipeline version metadata in ChromaDB:
+**Decision:** Every chunk stores pipeline version metadata in ChromaDB:
 - `chunking_version` (e.g. `hierarchical/v3`)
 - `embedding_model` (e.g. `qwen3-embedding:0.6b`)
 - `context_enrichment_version` (e.g. `v2`)

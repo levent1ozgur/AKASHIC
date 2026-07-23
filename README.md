@@ -1,8 +1,8 @@
 # AKASHIC — Knowledge Archive & Semantic Hybrid Indexing Core
 
-> **A local-first, retrieval-augmented generation pipeline with dense + sparse retrieval, cross-encoder reranking, and Obsidian vault integration.**
+> **A local-first, headless knowledge retrieval service for self-hosted AI systems — combining dense and sparse retrieval, cross-encoder reranking, confidence gating, and Obsidian vault synchronization.**
 
-AKASHIC turns your documents and notes into a searchable knowledge base — hybrid search (dense embeddings + BM25), reranked by a cross-encoder, served via REST API or MCP protocol. Everything runs on your own hardware — no cloud calls at query time.
+AKASHIC turns your documents, notes, and research into a searchable knowledge base — served via REST API or MCP protocol to agents, LLMs, and other applications. Everything runs on your own hardware — no cloud calls at query time.
 
 ---
 
@@ -22,16 +22,38 @@ It is built for personal knowledge infrastructure — your own notes, documents,
 ## Architecture overview
 
 ```
-    Knowledge sources ──→ Ingestion ──→ ChromaDB + BM25S
-                                            │
-    Query ──→ Router ──→ Dense + Sparse ────┤
-                     → RRF Fusion → Reranker → Confidence Gate → Response
+                         Query
+                           │
+                ┌──────────┴──────────┐
+                ▼                     ▼
+         Dense Retrieval       Sparse Retrieval
+           ChromaDB                BM25S
+                │                     │
+                └──────────┬──────────┘
+                           ▼
+                       RRF Fusion
+                           │
+                           ▼
+                   Cross-Encoder
+                    (ranking only)
+                           │
+                           ▼
+                  Ranked Evidence
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+      Dense Distance                Ranked Chunks
+      Confidence Gate                    │
+             │                           │
+             └─────────────┬─────────────┘
+                           ▼
+                        Response
 ```
 
 The pipeline has three phases:
 
 1. **Ingestion** — parses documents (PDF, DOCX, MD, etc.), chunks them with structural context, embeds each chunk, and writes to dense (ChromaDB) and sparse (BM25S) indices
-2. **Retrieval** — routes queries across both indices, fuses results via RRF, re-ranks with a cross-encoder, and gates unanswerable queries via dense cosine distance
+2. **Retrieval** — routes queries across both indices, fuses results via RRF, re-ranks with a cross-encoder (ranking only), and gates answerability via dense cosine distance (separate from ranking)
 3. **Lifecycle** — an inotify-based vault watcher keeps the index synchronized with file system changes (create, modify, rename, delete)
 
 **[Read the full architecture →](ARCHITECTURE.md)**
@@ -71,7 +93,7 @@ AKASHIC includes a reproducible evaluation suite and automated lifecycle tests.
 ├── 4 edge cases (unanswerable / policy / ambiguity)
 └── 1 template exclusion (policy)
 
-Results: 98% recall, 100% on answerable queries
+Results: 98% overall Recall@K (all currently indexed answerable retrieval cases pass; policy-excluded and expected-unanswerable cases are evaluated separately)
 ```
 
 Metrics tracked: Recall@K, Precision@K, MRR — per-category and aggregate.
@@ -168,7 +190,7 @@ Environment variables override `config.yaml` at runtime (set in `.env` or shell)
 | `EMBEDDING_MODEL` | `qwen3-embedding:0.6b` | Embedding model |
 | `RERANKER_MODEL` | `Qwen/Qwen3-Reranker-0.6B` | Reranker model |
 | `VAULT_PATH` | — | Obsidian vault directory |
-| `CONFIDENCE_THRESHOLD` | `0.55` | Dense cosine threshold for `not_found` |
+| `DENSE_CONFIDENCE_THRESHOLD` | `0.55` | Dense cosine threshold for `not_found` |
 | `MAX_FILE_SIZE_MB` | `50` | Max upload size |
 
 ---
