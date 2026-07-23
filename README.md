@@ -1,6 +1,6 @@
 # AKASHIC — Knowledge Archive & Semantic Hybrid Indexing Core
 
-> **A local-first, headless knowledge retrieval service for self-hosted AI systems — combining dense and sparse retrieval, cross-encoder reranking, confidence gating, and Obsidian vault synchronization.**
+> **A local-first, headless knowledge retrieval service for self-hosted AI systems, combining dense and sparse retrieval, cross-encoder reranking, confidence gating, and Obsidian vault synchronization.**
 
 AKASHIC turns your documents, notes, and research into a searchable knowledge base — served via REST API or MCP protocol to agents, LLMs, and other applications. Everything runs on your own hardware — no cloud calls at query time.
 
