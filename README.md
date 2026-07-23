@@ -6,104 +6,88 @@ AKASHIC turns your documents and notes into a searchable knowledge base — hybr
 
 ---
 
-## Architecture
+## Why AKASHIC exists
 
-```
-                         ┌──────────────────────┐
-                         │       AKASHIC        │
-                         │    Local-first RAG   │
-                         └──────────┬───────────┘
-                                    │
-                    ┌───────────────┴───────────────┐
-                    │                               │
-                    ▼                               ▼
-         ┌──────────────────┐              ┌──────────────────┐
-         │  Documents       │              │    Obsidian      │
-         │  PDF, DOCX,      │              │      Vault       │
-         │  PPTX, HTML…     │              │  Watcher + Sync  │
-         └────────┬─────────┘              └────────┬─────────┘
-                  │                                 │
-                  └────────────────┬────────────────┘
-                                   ▼
-                        ┌─────────────────────┐
-                        │     Ingestion       │
-                        │                     │
-                        │ Parse / Normalize   │
-                        │    (MarkItDown)     │
-                        │         ↓           │
-                        │      Chunking       │
-                        │         ↓           │
-                        │      Embedding      │◄──── Ollama /
-                        │                     │      Embedding API
-                        └──────────┬──────────┘
-                                   │
-                                   ▼
-                        ┌─────────────────────┐
-                        │     Index Store     │
-                        │                     │
-                        │ ChromaDB │  BM25S   │
-                        │  Dense   │  Sparse  │
-                        └──────────┬──────────┘
-                                   │
-                                   ▼
-                        ┌──────────────────────────────┐
-                        │       Query Pipeline         │
-                        │                              │
-                        │ Query → Query Cache          │
-                        │          │                   │
-                        │          └─ miss → HyDE      │
-                        │                    ↓         │
-                        │          Dense + Sparse      │
-                        │             Retrieval        │
-                        │                    ↓         │
-                        │              RRF Fusion      │
-                        │                    ↓         │
-                        │          Cross-Encoder       │
-                        │             Reranker         │
-                        │                    ↓         │
-                        │        Results + Confidence  │
-                        └──────────────┬───────────────┘
-                                       │
-                                       ▼
-                        ┌──────────────────────────────┐
-                        │          API Layer           │
-                        │                              │
-                        │ FastAPI (REST) :8765         │
-                        │ FastMCP (MCP)  :8766         │
-                        └──────────────────────────────┘
-```
+Most RAG projects are frameworks: they give you components and expect you to build the system. AKASHIC is the opposite — it is a **finished, deployable knowledge retrieval service** with:
 
-### Pipeline flow
+- A measured retrieval baseline (98% recall across 51 test cases)
+- Validated document lifecycle (create / modify / rename / delete all tested)
+- A reproducible evaluation suite for detecting regressions
+- Documented pipeline version metadata for index auditing
 
-```
-Query → Query Router
-        ├── Dense: ChromaDB (semantic similarity)
-        └── Sparse: BM25 (keyword matching)
-        → Reciprocal Rank Fusion
-        → Cross-Encoder Reranker
-            → Prompt Builder → Response with citations
-```
+It is built for personal knowledge infrastructure — your own notes, documents, and research, served by a self-hosted pipeline that never phones home.
 
 ---
 
-## Features
+## Architecture overview
 
-| Feature | Details |
+```
+    Knowledge sources ──→ Ingestion ──→ ChromaDB + BM25S
+                                            │
+    Query ──→ Router ──→ Dense + Sparse ────┤
+                     → RRF Fusion → Reranker → Confidence Gate → Response
+```
+
+The pipeline has three phases:
+
+1. **Ingestion** — parses documents (PDF, DOCX, MD, etc.), chunks them with structural context, embeds each chunk, and writes to dense (ChromaDB) and sparse (BM25S) indices
+2. **Retrieval** — routes queries across both indices, fuses results via RRF, re-ranks with a cross-encoder, and gates unanswerable queries via dense cosine distance
+3. **Lifecycle** — an inotify-based vault watcher keeps the index synchronized with file system changes (create, modify, rename, delete)
+
+**[Read the full architecture →](ARCHITECTURE.md)**
+
+---
+
+## Core capabilities
+
+| Capability | Implementation |
 |---|---|
-| **Multi-format ingestion** | PDF, DOCX, PPTX, XLSX, HTML, EPUB, Markdown, TXT — powered by [MarkItDown](https://github.com/microsoft/markitdown) |
-| **Dense retrieval** | ChromaDB with embedding model (Ollama or any OpenAI-compatible endpoint) |
-| **Sparse retrieval** | BM25 via [BM25S](https://github.com/dorianbrown/rank_bm25) for keyword matching |
-| **Hybrid fusion** | Reciprocal Rank Fusion combines dense + sparse results into a single ranked list |
-| **Cross-encoder reranking** | [Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B) re-scores top candidates (GPU optional, falls back to CPU) |
-| **Obsidian vault integration** | Watches a vault directory via inotify, auto-indexes new/changed notes, follows `[[wikilinks]]` for graph-aware retrieval |
-| **Graph expansion** | Builds a wikilink graph from vault notes — retrieval follows links to surface related context |
-| **HyDE** | Hypothetical Document Embeddings — generates a synthetic answer first, then retrieves against it |
-| **Query cache** | Caches frequent queries with configurable TTL |
-| **Confidence scoring** | Each result includes a reranker confidence score |
-| **MCP protocol** | Exposes `search_knowledge_base`, `ingest_document`, `pipeline_status` via the Model Context Protocol |
-| **REST API** | Full FastAPI with endpoints for query, ingest, status, admin |
-| **Telemetry** | Query latency, cache hit rates, not-found rates, confidence tracking |
-| **Dockerized** | Single-container deployment with GPU support |
+| **Multi-format ingestion** | PDF, DOCX, PPTX, XLSX, HTML, EPUB, MD, TXT via [MarkItDown](https://github.com/microsoft/markitdown) |
+| **Hybrid retrieval** | Dense embeddings (ChromaDB) + sparse keywords (BM25S) fused via RRF |
+| **Cross-encoder reranking** | [Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B) — GPU optional, CPU fallback |
+| **Confidence gating** | Dense cosine distance (threshold 0.55) — not reranker score, which is uncalibrated |
+| **Obsidian vault sync** | Inotify-based watcher — auto-indexes, auto-updates on rename, auto-removes on delete |
+| **Context enrichment** | `heading_path` for structured docs, `section_context` for flat PDF conversions |
+| **Pipeline versioning** | `chunking_version`, `embedding_model`, `context_enrichment_version` in every chunk's metadata |
+| **Query cache** | Configurable TTL with automatic invalidation on vault changes |
+| **MCP protocol** | Tools: `search_knowledge_base`, `ingest_document`, `pipeline_status` |
+| **REST API** | FastAPI — query, ingest, status, admin |
+| **HyDE** | Hypothetical Document Embeddings — generate-then-retrieve |
+| **Graph expansion** | Wikilink graph from vault notes for related-context retrieval |
+
+---
+
+## Engineering validation
+
+AKASHIC includes a reproducible evaluation suite and automated lifecycle tests.
+
+### Retrieval evaluation — 51 cases
+
+```
+51 test cases
+├── 30 vault queries (daily logs, setup, templates)
+├── 12 document queries (Alice in Wonderland)
+├── 4 setup queries
+├── 4 edge cases (unanswerable / policy / ambiguity)
+└── 1 template exclusion (policy)
+
+Results: 98% recall, 100% on answerable queries
+```
+
+Metrics tracked: Recall@K, Precision@K, MRR — per-category and aggregate.
+
+### Lifecycle tests — 5/5
+
+```
+CREATE  → note appears in search   ✓
+MODIFY  → old content gone, new    ✓
+RENAME  → searchable at new path   ✓
+DELETE  → content not retrievable  ✓
+```
+
+Validates index consistency across ChromaDB, BM25S, the document registry, and the query cache.
+
+**[Evaluation methodology and lifecycle design →](ARCHITECTURE.md#evaluation)**
 
 ---
 
@@ -111,162 +95,105 @@ Query → Query Router
 
 ### Prerequisites
 
-- Python 3.12+
-- [Ollama](https://ollama.com) with an embedding model:
-  ```bash
-  ollama pull qwen3-embedding:0.6b
-  ```
-- (Optional) NVIDIA GPU with CUDA for reranker acceleration
+```bash
+# Python 3.12+ and Ollama
+ollama pull qwen3-embedding:0.6b
+```
 
-### 1. Configuration
-
-Edit `config.yaml`:
+### 1. Configure
 
 ```yaml
+# config.yaml
 ollama_base_url: http://localhost:11434
 vault_path: /path/to/your/obsidian/vault
 ```
 
-The reranker model (`Qwen/Qwen3-Reranker-0.6B`) downloads automatically from HuggingFace on first use.
-
 ### 2. Run
 
-#### Docker (recommended)
-
+**Docker:**
 ```bash
 docker compose up -d
 ```
+Starts REST API on port **8765** and MCP server on port **8766**.
 
-This starts both the REST API (port 8765) and MCP server (port 8766).
-
-#### Manual (development)
-
+**Manual:**
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# Terminal 1 — API:
 uvicorn api.main:app --host 0.0.0.0 --port 8765
-
-# Terminal 2 — MCP server:
-python mcp_servers/rag_pipeline_server.py
 ```
 
-### 3. Ingest a document
+### 3. Ingest and query
 
 ```bash
-curl -X POST http://localhost:8765/ingest \
-  -F "file=@report.pdf"
-```
-
-### 4. Query
-
-```bash
+curl -X POST http://localhost:8765/ingest -F "file=@document.pdf"
 curl -X POST http://localhost:8765/query \
   -H "Content-Type: application/json" \
-  -d '{"query": "What does this document cover?", "top_k": 6}'
+  -d '{"query": "What does this cover?", "top_k": 6}'
 ```
 
 ---
 
-## API Endpoints
+## API
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/ingest` | Upload a document for indexing |
+| `POST` | `/ingest` | Upload a document |
 | `POST` | `/query` | Query the knowledge base |
-| `GET` | `/status` | Pipeline status (doc counts, index sizes, cache stats) |
+| `GET` | `/status` | Pipeline health and document counts |
 | `GET` | `/status/{doc_id}` | Status for a specific document |
-| `DELETE` | `/document/{doc_id}` | Remove a document and its vectors |
-
-### Query example
-
-```json
-{
-  "query": "How do authentication tokens expire?",
-  "top_k": 6,
-  "hyde": false,
-  "graph_expansion": true
-}
-```
+| `DELETE` | `/document/{doc_id}` | Remove a document |
 
 ---
 
-## MCP Server
+## MCP
 
-AKASHIC includes an MCP (Model Context Protocol) server on port **8766**. Register it in any MCP-compatible client:
-
+Register in any MCP-compatible client:
 ```
 URL: http://host:8766/mcp
 Transport: streamable-http
 ```
 
-Available tools: `search_knowledge_base`, `ingest_document`, `pipeline_status`
+Tools: `search_knowledge_base`, `ingest_document`, `pipeline_status`
 
 ---
 
-## Environment variables
+## Configuration
 
-Optional overrides — set these in `.env` or as shell variables to override `config.yaml` at runtime:
+Environment variables override `config.yaml` at runtime (set in `.env` or shell):
 
 | Variable | Default | Description |
 |---|---|---|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama/embeddings endpoint |
-| `EMBEDDING_MODEL` | `qwen3-embedding:0.6b` | Embedding model name |
-| `RERANKER_MODEL` | `Qwen/Qwen3-Reranker-0.6B` | Reranker model path or HuggingFace ID |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Embeddings endpoint |
+| `EMBEDDING_MODEL` | `qwen3-embedding:0.6b` | Embedding model |
+| `RERANKER_MODEL` | `Qwen/Qwen3-Reranker-0.6B` | Reranker model |
 | `VAULT_PATH` | — | Obsidian vault directory |
-| `TELEMETRY_ENABLED` | `true` | Enable query telemetry |
+| `CONFIDENCE_THRESHOLD` | `0.55` | Dense cosine threshold for `not_found` |
+| `MAX_FILE_SIZE_MB` | `50` | Max upload size |
 
 ---
 
-## Directory structure
+## Project scope & maintenance
 
-```
-AKASHIC/
-├── api/
-│   ├── main.py             # FastAPI app, all routes
-│   └── models.py           # Pydantic schemas
-├── pipeline/
-│   ├── ingestion/          # Validation, conversion (MarkItDown), chunking, embedding
-│   ├── retrieval/          # Dense, sparse, fusion, reranking, HyDE, prompt builder
-│   └── vault/              # Obsidian vault watcher + wikilink graph builder
-├── storage/                # ChromaDB, BM25, document registry
-├── mcp_servers/            # MCP protocol server (FastMCP)
-├── telemetry/              # Query logging and stats
-├── config.yaml             # All tunable parameters
-├── docker-compose.yml
-├── Dockerfile
-└── requirements.txt
-```
+AKASHIC is built primarily for personal knowledge infrastructure. It is:
 
----
+- **Measured** — 51-case eval suite detects regressions before they affect usage
+- **Lifecycle-validated** — create, modify, rename, and delete all tested
+- **Self-hosted** — all components run offline on consumer GPUs (4–6 GB VRAM)
 
-## Requirements
+It is not:
 
-| | Minimum | Recommended |
-|---|---|---|
-| **Python** | 3.12 | 3.12+ |
-| **RAM** | 4 GB | 8 GB+ |
-| **Disk** | 3 GB (models + index) | 10 GB+ |
-| **GPU** | CPU only | NVIDIA GPU with CUDA |
-| **Embedding model** | Any Ollama model | `qwen3-embedding:0.6b` |
-| **Reranker model** | — | `Qwen/Qwen3-Reranker-0.6B` (downloads on first use) |
+- A general-purpose RAG framework
+- A multi-tenant or horizontally scalable knowledge service
+- Guaranteed to have active upstream development
+
+Contributions are welcome — especially evaluation cases that expose new failure modes.
 
 ---
 
 ## Tech stack
 
-- **FastAPI** — REST API framework
-- **FastMCP** — MCP protocol server
-- **ChromaDB** — Vector database
-- **BM25S** — Sparse keyword retrieval
-- **Sentence-Transformers** — Cross-encoder reranker
-- **MarkItDown (Microsoft)** — Document ingestion
-- **Ollama** — Embedding inference
-- **Docker** — Containerization
-
----
+FastAPI · ChromaDB · BM25S · Sentence-Transformers · MarkItDown · Ollama · FastMCP · Docker
 
 ## License
 

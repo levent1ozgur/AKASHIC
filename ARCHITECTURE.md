@@ -40,7 +40,7 @@
 
 ---
 
-## Principles
+## 1. Principles
 
 AKASHIC is not a general-purpose RAG framework. It is infrastructure built to serve personal knowledge within a private AI ecosystem. This drives four architectural priorities:
 
@@ -51,7 +51,7 @@ AKASHIC is not a general-purpose RAG framework. It is infrastructure built to se
 
 ---
 
-## System Overview
+## 2. System Overview
 
 ```
                     INGEST
@@ -105,7 +105,7 @@ AKASHIC is not a general-purpose RAG framework. It is infrastructure built to se
 
 ---
 
-## Ingestion Pipeline
+## 3. Ingestion Pipeline
 
 ```
 Source Document
@@ -190,7 +190,7 @@ class Chunk:
 
 ---
 
-## Indexing Layer
+## 4. Indexing Layer
 
 ### ChromaDB (Dense)
 
@@ -233,7 +233,7 @@ This is the single source of truth for document existence. A document exists if 
 
 ---
 
-## Retrieval Pipeline
+## 5. Retrieval Pipeline
 
 ```
 Query
@@ -293,7 +293,7 @@ Three routing modes:
 
 ---
 
-## Confidence Gating
+## 6. Confidence Gating
 
 The confidence gate separates answerable queries from unanswerable ones.
 
@@ -321,7 +321,7 @@ The cross-encoder produces logits in a [0.016, 0.033] range across ALL query-chu
 
 ---
 
-## Lifecycle Management
+## 7. Lifecycle Management
 
 The vault watcher monitors `/home/user/Documents/SecondBrain` via inotify and maintains index consistency through all file operations.
 
@@ -403,7 +403,7 @@ File deleted
 
 ---
 
-## Consistency Guarantees
+## 8. Consistency Guarantees
 
 ### Cache Invalidation
 
@@ -447,7 +447,7 @@ chroma.doc_ids ∖ registry.documents = observed, flagged for cleanup
 
 ---
 
-## Evaluation
+## 9. Evaluation
 
 ### Test Suite
 
@@ -490,7 +490,7 @@ Results include per-category breakdown, aggregate metrics, and expected-vs-actua
 
 ---
 
-## Configuration
+## 10. Configuration
 
 All configuration lives in `config.yaml` at the project root.
 
@@ -537,7 +537,7 @@ ingestion_threads: 2
 
 ---
 
-## API Reference
+## 11. API Reference
 
 ### `POST /query`
 
@@ -571,7 +571,7 @@ Pipeline health: document counts, chunk counts, watcher status, telemetry.
 
 ---
 
-## File Layout
+## 12. File Layout
 
 ```
 akashic/
@@ -613,7 +613,7 @@ akashic/
 
 ---
 
-## Version Metadata
+## 13. Version Metadata
 
 Every chunk stores pipeline version information in ChromaDB metadata:
 
@@ -627,3 +627,195 @@ These fields enable:
 - Detecting stale indexes after pipeline changes
 - Comparing retrieval quality across pipeline versions
 - Auditing which pipeline version produced each query result
+## 14. Engineering Journey
+
+This section explains **why** the architecture looks the way it does — the failures, measurements, and decisions that shaped the current design.
+
+### 13.1 Section-context enrichment
+
+**Problem:** PDF-to-markdown conversion flattens section headers. A handbook entry like `Activities (Aloe) —` produced chunks with text like `— used externally for burns, wounds` but no mention of "Aloe" in the chunk body. Retrieval for "Aloe" returned nothing.
+
+```
+PDF section header:  Activities (Aloe) —
+                         ↓
+Markdown conversion:  — used externally for burns, wounds
+                         ↓
+Chunk text:           used externally for burns, wounds
+                         ↓
+Query "Aloe" →        Not found (herb name missing from chunk)
+```
+
+**Diagnosis:** The chunker had no concept of section identity. Each chunk was semantically orphaned from its parent heading.
+
+**Fix:** Added `_SECTION_RE` regex (`/^(\w[\w\s]+)\s+\((\w[\w\s]*)\)\s*—/m`) to detect section headers in flat documents, and a `section_context` field on every `Chunk`. The embedder prepends this context before computing the embedding vector — the stored text remains unchanged, but the vector carries the section's identity.
+
+**Result:**
+- Herbs category recall: 66.7% → 100%
+- Vault recall (structured docs): unchanged (96.7%)
+- 98% of handbook chunks now carry section_context
+
+### 13.2 Confidence gating: reranker → dense distance
+
+**Problem:** The cross-encoder reranker was used for both ranking and confidence gating. Its raw scores (logits) were treated as a probability that the query matched the corpus.
+
+**Diagnosis:** Log analysis showed reranker scores in a compressed range (0.016–0.033) across ALL query-chunk pairs. Correct and incorrect results overlapped completely — the absolute value carried no signal.
+
+| Metric | Reranker scores | Dense cosine distance |
+|--------|:---------------:|:---------------------:|
+| Positive queries | 0.016 – 0.033 | 0.21 – 0.60 |
+| Negative queries | 0.016 – 0.033 | 0.47 – 0.72 |
+| Separation | None | Clean |
+
+```
+Before:
+Reranker score → confidence → not_found
+              (uncalibrated — no separation)
+
+After:
+Dense similarity → confidence gate → not_found
+Reranker        → ranking only
+```
+
+**Fix:** Switched the confidence signal from the reranker's logits to ChromaDB's minimum cosine distance across retrieved chunks. The reranker continues to rank results — it's better at relative ordering than the dense index. But answerability is determined by the dense distance alone.
+
+**Threshold:** 0.55 (validated against 51-case eval set: 97.9% precision, 95.7% recall, F1=0.968)
+
+**Caveat:** The threshold is provisional — validated against the current corpus and query distribution. It should be re-evaluated as the corpus grows.
+
+### 13.3 Query cache invalidation
+
+**Problem:** Vault watcher correctly updated ChromaDB and BM25S on document changes. But the in-memory query cache (3600s TTL) served stale results for up to an hour. A modify-and-query sequence would return the old content from cache.
+
+```
+File modified → Watcher updates index → Cache still serves old results
+                                        ↓
+                                  User sees stale data
+```
+
+**Diagnosis:** The lifecycle tests were passing against the raw indices (ChromaDB had correct data), but the API returned cached responses. The test harness checked API responses, not raw index state.
+
+**Fix:** Added `invalidate_query_cache()` — clears the entire query cache on every vault document event (CREATE, MODIFY, RENAME, DELETE).
+
+```python
+def invalidate_query_cache() -> None:
+    if state.query_cache:
+        state.query_cache.clear()
+```
+
+Also added calls in the document DELETE endpoint (`DELETE /document/{doc_id}`).
+
+### 13.4 MOVED handler: orphaned chunk cleanup
+
+**Problem:** Renaming a vault note left orphaned chunks in ChromaDB under the old source path. The MOVED handler correctly updated the registry but never removed the old vectors.
+
+```
+File renamed (file.md → new.md)
+  ↓
+MOVED handler:
+  ✓ Deleted old registry entry
+  ✓ Created new registry entry (new.md)
+  ✓ Indexed new chunks
+  ✗ Did not delete old chunks from ChromaDB/BM25S
+                        ↓
+Old chunks remain retrievable under old path
+```
+
+**Fix:** Added ChromaDB and BM25S cleanup in the MOVED handler — the same triple-store cleanup that the MODIFY and DELETE handlers already performed.
+
+```python
+if event.event_type == VaultEventType.MOVED:
+    if event.old_path:
+        old_doc = state.registry.get_document_by_path(event.old_path)
+        if old_doc:
+            state.chroma.delete_by_metadata(COLLECTION_VAULT, {"doc_id": old_doc.doc_id})
+            state.bm25.delete_by_doc_id(INDEX_VAULT, old_doc.doc_id)
+            state.registry.delete_document(old_doc.doc_id)
+            state.graph.remove_node(event.old_path)
+            invalidate_query_cache()
+```
+
+### 13.5 Race condition: concurrent event handlers
+
+**Problem:** The vault watcher spawned a new thread for every file system event. A MOVED event and DELETE event for the same file could run concurrently.
+
+```
+Thread A: MOVED → delete old index → create new index (in progress)
+Thread B: DELETE → delete registry → cache clear
+Thread A: → finish indexing → writes new chunks to ChromaDB
+                                            ↓
+Chunks exist in ChromaDB but registry entry is gone
+```
+
+**Diagnosis:** The fire-and-forget threading was borrowed from the initial implementation for responsiveness. For small markdown files (the vault's dominant content type), the handler completes in under 2 seconds — responsiveness was never the bottleneck.
+
+**Fix:** Replaced threading with sequential event processing. The polling loop calls the handler directly instead of delegating to a thread.
+
+```python
+# Before: concurrent (bugs)
+def _on_vault_event(event):
+    threading.Thread(target=_handle_vault_event_sync, args=(event,)).start()
+
+# After: sequential (correct)
+def _on_vault_event(event):
+    _handle_vault_event_sync(event)
+```
+
+### 13.6 Test methodology pitfalls
+
+The lifecycle tests themselves had a bug that masked the true state of the index. The original test used substring matching:
+
+```python
+# Broken: substring match
+def found(token, resp):
+    return token in str(resp.get("chunks", []))
+```
+
+For a query "TOKEN_AAA", a chunk containing "LCTOKEN_AAA" would match because "TOKEN_AAA" is a substring of "LCTOKEN_AAA". The test incorrectly reported old content as still present.
+
+Fixed to word-boundary matching:
+```python
+# Correct: word boundary match
+def found_exact(token, resp):
+    pat = re.compile(r"\b" + re.escape(token) + r"\b")
+    for c in resp.get("chunks", []):
+        if pat.search(c.get("text", "")):
+            return True
+    return False
+```
+
+### 13.7 Version tracking
+
+Every chunk stores pipeline version metadata in ChromaDB:
+- `chunking_version` (e.g. `hierarchical/v3`)
+- `embedding_model` (e.g. `qwen3-embedding:0.6b`)
+- `context_enrichment_version` (e.g. `v2`)
+
+This answers the question: "Why did this document retrieve differently after the pipeline changed?" — you can read the version fields from the chunk metadata and know exactly which pipeline state produced it.
+
+The metadata model is designed to evolve toward:
+
+```python
+{
+    "document_id": "...",
+    "chunking_version": "...",
+    "context_enrichment_version": "...",
+    "embedding_model": "...",
+    "indexed_at": "...",
+}
+```
+
+---
+
+## 15. Future Boundaries
+
+AKASHIC has been deliberately scoped. The following are intentionally out of scope for the initial architecture:
+
+- **Multi-tenant isolation** — single-user by design
+- **Distributed indexing** — all stores are local files
+- **Real-time streaming** — batch ingestion, interactive query
+- **Fine-grained access control** — document-level at most
+- **Cross-collection deduplication** — vault and documents are separate namespaces
+- **Embedding model rotation** — requires a full reindex
+- **Automatic schema migration** — version metadata is advisory, not enforced
+
+These may become relevant as AKASHIC matures, but they are not part of the current design.
