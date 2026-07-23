@@ -204,7 +204,17 @@ Environment variables override `config.yaml` at runtime. Set them in `.env` or i
 
 ## Project scope & maintenance
 
-AKASHIC is built primarily for personal knowledge infrastructure. It is:
+AKASHIC is built primarily for my own personal knowledge infrastructure and self-hosted AI systems. It exists to solve problems I encounter in my own environment and to serve as a component of the systems I build.
+
+Development priorities are therefore driven by my own needs. If I need a new feature, encounter a bug that affects my usage, or change how my infrastructure works, I will improve AKASHIC accordingly. If I do not need something myself, I may not implement it, regardless of how useful it might be to someone else.
+
+This means AKASHIC is not maintained as a product with a public roadmap, guaranteed response times, or a commitment to implement feature requests. Issues and pull requests may be reviewed when they align with my own needs and priorities, but there is no promise of ongoing maintenance for external use cases.
+
+That is intentional. AKASHIC is infrastructure I build for myself and share publicly because others may find it useful.
+
+If you need functionality that falls outside my priorities, you are free to fork the project and adapt it to your own requirements.
+
+It is:
 
 * **Measured** — A 51-case evaluation suite detects regressions before they affect usage
 * **Lifecycle-validated** — Create, modify, rename, and delete operations are tested
@@ -214,7 +224,7 @@ It is not:
 
 * A general-purpose RAG framework
 * A multi-tenant or horizontally scalable knowledge service
-* A project with guaranteed active upstream development
+* A product with a public feature roadmap or guaranteed maintenance
 
 ---
 
