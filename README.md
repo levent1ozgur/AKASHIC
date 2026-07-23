@@ -209,8 +209,6 @@ It is not:
 - A multi-tenant or horizontally scalable knowledge service
 - Guaranteed to have active upstream development
 
-Contributions are welcome — especially evaluation cases that expose new failure modes.
-
 ---
 
 ## Tech stack
