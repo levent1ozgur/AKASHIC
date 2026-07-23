@@ -278,6 +278,13 @@ async def ingest(file: UploadFile = File(...)):
     )
 
 
+def invalidate_query_cache() -> None:
+    """Clear the in-memory query cache when vault data changes."""
+    if state.query_cache:
+        n = len(state.query_cache)
+        state.query_cache.clear()
+        logger.info("Query cache cleared (%d entries)", n)
+
 @app.post("/query", response_model=QueryResponse)
 async def query(req: QueryRequest):
     """
@@ -592,13 +599,8 @@ def _ingest_sync(doc_id: str, path: Path, source_name: str) -> None:
 # ---------------------------------------------------------------------------
 
 def _on_vault_event(event: VaultEvent) -> None:
-    """Handle vault file changes from the watcher."""
-    import threading
-    threading.Thread(
-        target=_handle_vault_event_sync,
-        args=(event,),
-        daemon=True,
-    ).start()
+    """Handle vault file changes sequentially to prevent race conditions."""
+    _handle_vault_event_sync(event)
 
 
 def _handle_vault_event_sync(event: VaultEvent) -> None:
@@ -613,6 +615,7 @@ def _handle_vault_event_sync(event: VaultEvent) -> None:
             state.bm25.delete_by_doc_id(INDEX_VAULT, doc.doc_id)
             state.registry.delete_document(doc.doc_id)
             state.graph.remove_node(rel_path)
+            invalidate_query_cache()
             logger.info("Vault note deleted from index: %s", rel_path)
         return
 
@@ -621,6 +624,9 @@ def _handle_vault_event_sync(event: VaultEvent) -> None:
             old_doc = state.registry.get_document_by_path(event.old_path)
             if old_doc:
                 state.registry.delete_document(old_doc.doc_id)
+                state.chroma.delete_by_metadata(COLLECTION_VAULT, {"doc_id": old_doc.doc_id})
+                state.bm25.delete_by_doc_id(INDEX_VAULT, old_doc.doc_id)
+                invalidate_query_cache()
                 state.graph.remove_node(event.old_path)
 
     # CREATED or MODIFIED or MOVED (new path)
@@ -653,6 +659,7 @@ def _handle_vault_event_sync(event: VaultEvent) -> None:
         )
         if chunks:
             state.embedder.embed(chunks, doc_id=doc_id)
+            invalidate_query_cache()
 
         # Update graph
         state.graph.update_node(rel_path, abs_path)
