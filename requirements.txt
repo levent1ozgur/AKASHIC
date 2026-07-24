@@ -4,6 +4,9 @@ uvicorn==0.49.0
 python-multipart==0.0.32
 pydantic>=2.9.0
 
+# MCP server
+mcp>=1.28.0
+
 # Storage
 chromadb
 bm25s
@@ -28,4 +31,5 @@ httpx
 # Vault
 watchdog
 
+# Config
 python-dotenv>=1.0.0
