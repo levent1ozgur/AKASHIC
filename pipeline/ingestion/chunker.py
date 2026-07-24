@@ -712,13 +712,13 @@ Quick note for future reference.
     chunks = chunker.chunk(
         text=obsidian_note,
         doc_id="doc-5",
-        source="Research/odysseus.md",
+        source="Research/akashic.md",
         source_type="vault",
     )
     assert len(chunks) >= 1
     c = chunks[0]
     assert c.source_type == "vault"
-    assert c.source == "Research/odysseus.md"
+    assert c.source == "Research/akashic.md"
     assert "rag" in c.tags or "pipeline" in c.tags
     assert "ChromaDB" in c.wikilinks or "BM25S" in c.wikilinks
     assert c.language == "en"

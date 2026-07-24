@@ -36,7 +36,7 @@ MCP_PORT     = 8766
 # ---------------------------------------------------------------------------
 
 mcp = FastMCP(
-    name="odysseus-rag-pipeline",
+    name="akashic-rag-pipeline",
     host=MCP_HOST,
     port=MCP_PORT,
     instructions=(
