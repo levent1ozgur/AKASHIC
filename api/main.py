@@ -222,7 +222,7 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Odysseus RAG Pipeline",
+    title="AKASHIC RAG Pipeline",
     description="Local-first document and vault retrieval API",
     version="1.0.0",
     lifespan=lifespan,

@@ -1,11 +1,11 @@
 """
 mcp_servers/rag_pipeline_server.py
-MCP server that exposes your RAG pipeline to Odysseus.
+MCP server that exposes your RAG pipeline to AKASHIC.
 
 Run on host:
     python3.12 mcp_servers/rag_pipeline_server.py
 
-Register in Odysseus → Settings → Integrations → Add MCP Server:
+Register in AKASHIC → Settings → Integrations → Add MCP Server:
     Transport: http (or streamable-http)
     URL: http://host.docker.internal:8766/mcp
 """
@@ -173,5 +173,5 @@ if __name__ == "__main__":
     else:
         print(f"Starting RAG MCP server → http://{MCP_HOST}:{MCP_PORT}")
         print(f"RAG pipeline at: {RAG_BASE_URL}")
-        print(f"Register in Odysseus: http://host.docker.internal:{MCP_PORT}/mcp")
+        print(f"Register in AKASHIC: http://host.docker.internal:{MCP_PORT}/mcp")
         mcp.run(transport="streamable-http")

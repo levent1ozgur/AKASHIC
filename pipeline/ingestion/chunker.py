@@ -703,7 +703,7 @@ tags: [rag, pipeline]
 ai-first: true
 ---
 
-# Odysseus Notes
+# AKASHIC Notes
 
 See [[ChromaDB]] and [[BM25S]] for retrieval components.
 

@@ -23,7 +23,7 @@ CITE_VAULT = "VAULT"
 
 # System prompt template
 _SYSTEM_PROMPT = """\
-You are Odysseus, a local AI assistant with access to two knowledge sources:
+You are AKASHIC, a local knowledge retrieval assistant with access to two knowledge sources:
 - [DOCS] Uploaded documents (PDFs, reports, manuals, notes)
 - [VAULT] Personal knowledge base (Obsidian notes, research, decisions)
 
@@ -321,7 +321,7 @@ if __name__ == "__main__":
     print(f"Context blocks: OK  (each starts with its citation)")
 
     # Verify full_prompt contains system + context + query
-    assert "Odysseus" in prompt.system
+    assert "AKASHIC" in prompt.system
     assert "Context:" in prompt.full_prompt
     assert "Question: How do authentication tokens expire?" in prompt.full_prompt
     print(f"Full prompt structure: OK")
@@ -364,7 +364,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------
     # Test 5: Vault citation format
     # -----------------------------------------------------------------------
-    vault = make_result("v1", "Vault content.", "Projects/Odysseus.md",
+    vault = make_result("v1", "Vault content.", "Projects/AKASHIC.md",
                         collection="vault", heading="Architecture", page=0)
     prompt5 = builder.build(query="test", results=[vault])
     assert prompt5.citations[0].startswith("[VAULT:"), \

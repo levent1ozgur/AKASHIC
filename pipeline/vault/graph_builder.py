@@ -439,7 +439,7 @@ if __name__ == "__main__":
         (vault / "ADR").mkdir()
 
         (vault / "index.md").write_text(
-            "# Index\n\nSee [[Research/arch]] and [[Projects/Odysseus]].\n"
+            "# Index\n\nSee [[Research/arch]] and [[Projects/AKASHIC]].\n"
         )
         (vault / "Research" / "arch.md").write_text(
             "# Architecture\n\nUses [[ChromaDB]] and [[BM25S]].\n"
@@ -451,8 +451,8 @@ if __name__ == "__main__":
         (vault / "Research" / "BM25S.md").write_text(
             "# BM25S\n\nSparse search index.\n"
         )
-        (vault / "Projects" / "Odysseus.md").write_text(
-            "# Odysseus\n\nMain project. References [[Research/arch]].\n"
+        (vault / "Projects" / "AKASHIC.md").write_text(
+            "# AKASHIC\n\nMain project. References [[Research/arch]].\n"
         )
         (vault / "ADR" / "001-chunking.md").write_text(
             "# ADR 001: Chunking Strategy\n\nSee [[Research/arch]] for context.\n"
@@ -490,7 +490,7 @@ if __name__ == "__main__":
         assert "Research/BM25S.md"    in result.linked_paths
         print(f"Expansion from arch.md (depth=1): {result.linked_paths}")
 
-        # Graph expansion depth=2 (should reach index.md via Projects/Odysseus)
+        # Graph expansion depth=2 (should reach index.md via Projects/AKASHIC)
         result2 = builder.expand("Research/arch.md", depth=2)
         assert len(result2.linked_paths) >= len(result.linked_paths)
         print(f"Expansion from arch.md (depth=2): {result2.linked_paths}")

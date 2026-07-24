@@ -388,12 +388,12 @@ confidence: high
 
 ## For future Claude
 
-This note documents the Odysseus RAG design decisions.
+This note documents the AKASHIC design decisions.
 
 ## Overview
 
 The pipeline uses [[ChromaDB]] for dense retrieval and [[BM25S]] for sparse search.
-See also [[Projects/Odysseus]] for the full project context.
+See also [[Projects/AKASHIC]] for the full project context.
 
 ## Components
 
@@ -439,7 +439,7 @@ See [[ADR/001-chunking-strategy]] for the chunking rationale.
     wl_targets = [w.target for w in meta.wikilinks]
     assert "ChromaDB"                 in wl_targets, f"wikilinks: {wl_targets}"
     assert "BM25S"                    in wl_targets
-    assert "Projects/Odysseus"        in wl_targets
+    assert "Projects/AKASHIC"        in wl_targets
     assert "ADR/001-chunking-strategy" in wl_targets
     assert meta.has_wikilinks is True
     print(f"Wikilinks: OK  ({len(meta.wikilinks)} found: {wl_targets})")
